@@ -282,8 +282,8 @@ type chatRequest struct {
 	Stream     bool             `json:"stream"`
 	Tools      []any            `json:"tools"`
 	ToolChoice any              `json:"tool_choice"`
-	// ReasoningEffort 思考档位（low/medium/xhigh）；仅 qwen3.8-flash 生效。
-	// 客户端也可用 OpenAI 风格 reasoning_effort 字段（同一 JSON key）。
+	// ReasoningEffort 思考档位（low/medium/xhigh）；所有模型均生效（2026-09-19 起统
+	// 一走 qwen3.8-flash 的思考链路）。客户端用 OpenAI 风格 reasoning_effort 字段。
 	ReasoningEffort string `json:"reasoning_effort"`
 }
 

@@ -12,13 +12,16 @@ import (
 )
 
 // IsReasoningModel 判断上游模型 key 是否开启思考模式（请求体 is_reasoning=true）。
-// 仅 qwen3.8-flash（qfmodel）：实测免费且支持思考；其余模型保持默认 false。
+// 2026-09-19 起对所有模型统一开启——与 qwen3.8-flash（qfmodel）走同一条思考链路：
+// is_reasoning=true + source="system"。上游对不支持的模型会忽略该字段，
+// 实测不会因此报错（曾用 totally-fake-model-xyz 验证过 key 被忽略的行为）。
 func IsReasoningModel(modelKey string) bool {
-	return modelKey == "qfmodel"
+	return modelKey != ""
 }
 
-// NormalizeReasoningEffort 校验思考档位（qfmodel 的 thinking_config 仅支持
+// NormalizeReasoningEffort 校验思考档位（上游 thinking_config 支持
 // low/medium/xhigh）。非法值返回空串 = 不注入 parameters，走上游默认（medium）。
+// 所有模型共用同一档位集合，与 qfmodel 完全一致。
 func NormalizeReasoningEffort(s string) string {
 	switch strings.ToLower(strings.TrimSpace(s)) {
 	case "low":
@@ -52,9 +55,9 @@ func BuildAgentBody(openaiMessages []map[string]any, modelKey string, clientTool
 	now := time.Now()
 	newUUID := uuid4()
 
-	// 思考模式按模型区分：仅 qwen3.8-flash（qfmodel）开 is_reasoning=true。
+	// 思考模式：所有模型统一开启（2026-09-19 起），与 qwen3.8-flash 同一链路。
 	// source="system" 是上游触发思考的真正开关——实测缺它则 reasoning_content 永不下发
-	//（探测见 2026-09-18；旧版全部硬编码 false）。
+	//（探测见 2026-09-18；旧版全部硬编码 false，更早版本仅 qfmodel 开启）。
 	isReasoning := IsReasoningModel(modelKey)
 	modelConfig := map[string]any{"key": modelKey, "is_reasoning": isReasoning}
 	if isReasoning {
@@ -98,8 +101,8 @@ func BuildAgentBody(openaiMessages []map[string]any, modelKey string, clientTool
 		base["tools"] = clientTools
 	}
 
-	// 思考档位：仅推理模型且客户端显式传了合法值时注入 parameters。
-	// 不传 = 上游默认（qfmodel 默认 medium）。实测 xhigh 推理量约为默认 2~6 倍。
+	// 思考档位：所有模型都支持（与 qfmodel 一致），客户端显式传了合法值时注入 parameters。
+	// 不传 = 上游默认（medium）。实测 xhigh 推理量约为默认 2~6 倍。
 	if isReasoning && reasoningEffort != "" {
 		base["parameters"] = map[string]any{
 			"enable_thinking":  true,

@@ -61,9 +61,8 @@ func TestBuildBodyForcesStreamAndModel(t *testing.T) {
 	}
 }
 
-// 思考模式仅 qwen3.8-flash（qfmodel）开启：
+// 思考模式：2026-09-19 起所有模型统一开启，与 qwen3.8-flash 同一链路：
 // is_reasoning=true + source="system"（缺 source 时上游不下发 reasoning_content，2026-09-18 实测）。
-// 其余模型保持 false 且不带 source。
 func TestBuildBodyReasoningWhitelist(t *testing.T) {
 	msgs := []map[string]any{{"role": "user", "content": "你好"}}
 	check := func(modelKey string, want bool) {
@@ -96,15 +95,21 @@ func TestBuildBodyReasoningWhitelist(t *testing.T) {
 			t.Errorf("%s: extra.modelConfig.is_reasoning=%v (want %v)", modelKey, mc2["is_reasoning"], want)
 		}
 	}
-	check("qfmodel", true)         // qwen3.8-flash：开思考（免费）
-	check("gmodel", false)         // glm-5.3：默认关（探测曾开过，最终按用户要求收回）
-	check("qmodel_preview", false) // qwen3.8-max-preview：默认关
-	check("qmodel_latest", false)  // qwen3.7-max：默认关
-	check("dmodel", false)         // deepseek-v4-pro：默认关
+	// 全部模型统一开思考（2026-09-19 按用户要求放开）
+	check("qfmodel", true)         // qwen3.8-flash
+	check("gmodel", true)          // glm-5.3
+	check("qmodel_preview", true)  // qwen3.8-max-preview
+	check("qmodel_latest", true)   // qwen3.7-max
+	check("dmodel", true)          // deepseek-v4-pro
+	check("gm51model", true)       // glm-5.2
+	check("mmodel", true)          // minimax-m2.7
+	check("kmodel", true)          // kimi-k2.7-code
+	// 空 key 是异常输入，保持 false
+	check("", false)
 }
 
-// 思考档位透传：仅 qfmodel 且合法档位时注入 parameters；
-// 默认（空）/非法值/非推理模型都不注入（走上游默认 medium）。
+// 思考档位透传：所有模型 + 合法档位时注入 parameters；
+// 默认（空）/非法值都不注入（走上游默认 medium）。
 func TestBuildBodyReasoningEffortPassthrough(t *testing.T) {
 	msgs := []map[string]any{{"role": "user", "content": "你好"}}
 
@@ -132,14 +137,27 @@ func TestBuildBodyReasoningEffortPassthrough(t *testing.T) {
 		t.Errorf("parameters=%v", params)
 	}
 
+	// 其它模型 + xhigh → 同样注入（2026-09-19 起统一）
+	for _, mk := range []string{"gmodel", "dmodel", "qmodel_latest"} {
+		m2 := build(mk, "xhigh")
+		p2, ok := m2["parameters"].(map[string]any)
+		if !ok {
+			t.Errorf("parameters missing for %s+xhigh (all models should support reasoning)", mk)
+			continue
+		}
+		if p2["enable_thinking"] != true || p2["reasoning_effort"] != "xhigh" {
+			t.Errorf("%s parameters=%v", mk, p2)
+		}
+	}
+
 	// qfmodel + 空 → 不注入
 	if _, present := build("qfmodel", "")["parameters"]; present {
 		t.Errorf("parameters should be absent when effort empty")
 	}
 
-	// 非推理模型 + xhigh → 不注入
-	if _, present := build("gmodel", "xhigh")["parameters"]; present {
-		t.Errorf("parameters should be absent for non-reasoning model")
+	// 空 modelKey + xhigh → 不注入（异常输入不注入思考）
+	if _, present := build("", "xhigh")["parameters"]; present {
+		t.Errorf("parameters should be absent for empty model key")
 	}
 
 	// qfmodel + 非法值（经 Normalize 后为空）→ 不注入
