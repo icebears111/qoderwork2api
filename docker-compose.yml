@@ -1,11 +1,34 @@
+# 与 icebears.cn 生产实际运行方式对齐（2026-09-18 核对）：
+#   - 容器名 qoder2api，挂 icebears-net，不发布任何端口 ——
+#     由同网络的 sub2api 按容器名访问 http://qoder2api:8963/v1
+#   - config.json 只读挂载（生产在 /opt/qoderwork2api/config.json，本目录放一份等效的）
+#   - auths/ 与 data/ 可写挂载，容器内以非 root 用户 app(10001) 运行，宿主目录需 chown 10001
+# 单机自测想从宿主直连的话，把 ports 注释放开即可。
 services:
   qw2api:
     build: .
-    container_name: qoderwork2api
+    image: qoderwork2api:local
+    container_name: qoder2api
     restart: unless-stopped
-    ports:
-      - "28787:7864"
+    networks:
+      - icebears-net
+    deploy:
+      resources:
+        limits:
+          memory: 192M
+    mem_limit: 192m
     volumes:
       - ./auths:/app/auths
       - ./data:/app/data
       - ./config.json:/app/config.json:ro
+    # ports:
+    #   - "127.0.0.1:8963:8963"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8963/healthz || exit 1"]
+      interval: 30s
+      timeout: 5s
+      start_period: 5s
+
+networks:
+  icebears-net:
+    name: icebears-net
