@@ -1,0 +1,11 @@
+pats/
+data/
+*.tmp
+.git/
+.gitignore
+docs/
+scripts/
+PLAN.md
+SPEC.md
+LOOP.md
+README.md

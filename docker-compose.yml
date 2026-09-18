@@ -1,0 +1,11 @@
+services:
+  qw2api:
+    build: .
+    container_name: qoderwork2api
+    restart: unless-stopped
+    ports:
+      - "28787:7864"
+    volumes:
+      - ./auths:/app/auths
+      - ./data:/app/data
+      - ./config.json:/app/config.json:ro

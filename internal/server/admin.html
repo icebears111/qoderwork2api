@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QoderWork2API 管理面板</title>
+<style>
+:root {
+  /* Brand Colors */
+  --brand-50: #eef2ff;
+  --brand-100: #e0e7ff;
+  --brand-200: #c7d2fe;
+  --brand-300: #a5b4fc;
+  --brand-400: #818cf8;
+  --brand-500: #6366f1;
+  --brand-600: #4f46e5;
+  --brand-700: #4338ca;
+  --brand-800: #3730a3;
+  --brand-900: #312e81;
+
+  /* Neutral Colors */
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+
+  /* Semantic Colors */
+  --success: #10b981;
+  --success-bg: rgba(16, 185, 129, 0.1);
+  --warning: #f59e0b;
+  --warning-bg: rgba(245, 158, 11, 0.1);
+  --danger: #ef4444;
+  --danger-bg: rgba(239, 68, 68, 0.1);
+  --info: #3b82f6;
+  --info-bg: rgba(59, 130, 246, 0.1);
+
+  /* Theme */
+  --bg-primary: #0f1117;
+  --bg-secondary: #161922;
+  --bg-tertiary: #1e2231;
+  --bg-hover: #252a3a;
+  --border: #2a3040;
+  --border-light: #363d50;
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #64748b;
+
+  /* Typography */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', monospace;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Border Radius */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.3);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.4);
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-base: 200ms ease;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Icons */
+.icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  background-color: currentColor;
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+}
+
+.icon-dashboard { -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Crect x='3' y='3' width='7' height='7'/%3E%3Crect x='14' y='3' width='7' height='7'/%3E%3Crect x='3' y='14' width='7' height='7'/%3E%3Crect x='14' y='14' width='7' height='7'/%3E%3C/svg%3E"); }
+.icon-users { -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Cpath d='M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='9' cy='7' r='4'/%3E%3Cpath d='M22 21v-2a4 4 0 0 0-3-3.87'/%3E%3Cpath d='M16 3.13a4 4 0 0 1 0 7.75'/%3E%3C/svg%3E"); }
+.icon-key { -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Cpath d='m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.78 7.78 5.5 5.5 0 0 1 7.78-7.78zm0 0L15.5 7.5m0 0 3 3L21 7.5l-3-3'/%3E%3C/svg%3E"); }
+.icon-settings { -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z'/%3E%3C/svg%3E"); }
+.icon-logout { -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Cpath d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4'/%3E%3Cpolyline points='16 17 21 12 16 7'/%3E%3Cline x1='21' y1='12' x2='9' y2='12'/%3E%3C/svg%3E"); }
+.icon-plus { -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Cline x1='12' y1='5' x2='12' y2='19'/%3E%3Cline x1='5' y1='12' x2='19' y2='12'/%3E%3C/svg%3E"); }
+.icon-refresh { -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Cpolyline points='23 4 23 10 17 10'/%3E%3Cpath d='M20.49 15a9 9 0 1 1-2.12-9.36L23 10'/%3E%3C/svg%3E"); }
+.icon-trash { -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Cpolyline points='3 6 5 6 21 6'/%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/%3E%3C/svg%3E"); }
+.icon-check { -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E"); }
+.icon-x { -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Cline x1='18' y1='6' x2='6' y2='18'/%3E%3Cline x1='6' y1='6' x2='18' y2='18'/%3E%3C/svg%3E"); }
+.icon-copy { -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Crect x='9' y='9' width='13' height='13' rx='2' ry='2'/%3E%3Cpath d='M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1'/%3E%3C/svg%3E"); }
+.icon-activity { -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Cpolyline points='22 12 18 12 15 21 9 3 6 12 2 12'/%3E%3C/svg%3E"); }
+
+/* Layout */
+.app { display: flex; min-height: 100vh; width: 100%; }
+
+.sidebar {
+  width: 240px;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 100;
+}
+
+/* ... existing sidebar styles ... */
+
+.main-content {
+  margin-left: 240px;
+  padding: var(--space-6);
+  width: calc(100% - 240px);
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 240px;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 100;
+}
+
+.sidebar-header {
+  padding: var(--space-5);
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.sidebar-brand-icon {
+  width: 28px;
+  height: 28px;
+  background: var(--brand-500);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.sidebar-brand-icon .icon { width: 16px; height: 16px; }
+
+.sidebar-nav {
+  flex: 1;
+  padding: var(--space-4) var(--space-3);
+  overflow-y: auto;
+}
+
+.sidebar-section {
+  padding: var(--space-4) var(--space-3) var(--space-2);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+  margin-bottom: var(--space-1);
+}
+
+.sidebar-link:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.sidebar-link.active {
+  background: var(--brand-600);
+  color: white;
+}
+
+.sidebar-link .icon { opacity: 0.7; }
+.sidebar-link.active .icon { opacity: 1; }
+
+.sidebar-footer {
+  padding: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 240px;
+  padding: var(--space-6);
+  min-width: 0;
+}
+
+/* Topbar */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.topbar-actions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+/* User Menu */
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background: var(--brand-500);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 13px;
+  color: white;
+}
+
+.user-name {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn .icon { width: 14px; height: 14px; }
+
+.btn-primary {
+  background: var(--brand-600);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--brand-500);
+}
+
+.btn-secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--border-light);
+}
+
+.btn-danger {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border: 1px solid transparent;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: var(--danger);
+  color: white;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.btn-sm {
+  padding: var(--space-1) var(--space-3);
+  font-size: 12px;
+}
+
+.btn-sm .icon { width: 12px; height: 12px; }
+
+/* Cards */
+.card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  margin-bottom: var(--space-5);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.card-title {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+@media (max-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.stat-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+}
+
+.stat-label {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: var(--space-2);
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.stat-value.success { color: var(--success); }
+.stat-value.warning { color: var(--warning); }
+.stat-value.danger { color: var(--danger); }
+.stat-value.info { color: var(--info); }
+
+/* Table */
+.table-container {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  text-align: left;
+  padding: var(--space-3) var(--space-4);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+}
+
+td {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+
+tr:last-child td { border-bottom: none; }
+
+tr:hover td {
+  background: var(--bg-hover);
+}
+
+/* Badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.badge-success { background: var(--success-bg); color: var(--success); }
+.badge-warning { background: var(--warning-bg); color: var(--warning); }
+.badge-danger { background: var(--danger-bg); color: var(--danger); }
+.badge-info { background: var(--info-bg); color: var(--info); }
+
+/* Credits Bar */
+.credits-bar {
+  width: 100%;
+  height: 4px;
+  background: var(--border);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-top: var(--space-2);
+}
+
+.credits-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.4s ease;
+}
+
+/* Progress colors */
+.progress-high { background: var(--success); }
+.progress-mid { background: var(--warning); }
+.progress-low { background: var(--danger); }
+
+/* Text colors */
+.text-success { color: var(--success); }
+.text-warning { color: var(--warning); }
+.text-danger { color: var(--danger); }
+.text-muted { color: var(--text-muted); }
+.text-mono { font-family: var(--font-mono); font-size: 12px; }
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all var(--transition-base);
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  width: 90%;
+  max-width: 440px;
+  max-height: 90vh;
+  overflow-y: auto;
+  transform: scale(0.95);
+  transition: transform var(--transition-base);
+  box-shadow: var(--shadow-lg);
+}
+
+.modal-overlay.active .modal {
+  transform: scale(1);
+}
+
+.modal-header {
+  padding: var(--space-5);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.modal-close {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.modal-close:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.modal-close .icon { width: 16px; height: 16px; }
+
+.modal-body {
+  padding: var(--space-5);
+}
+
+.modal-footer {
+  padding: var(--space-4) var(--space-5);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+/* Form */
+.form-group {
+  margin-bottom: var(--space-4);
+}
+
+.form-label {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.form-input {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: all var(--transition-fast);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--brand-500);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.form-input::placeholder {
+  color: var(--text-muted);
+}
+
+select.form-input {
+  cursor: pointer;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: var(--space-1);
+  margin-bottom: var(--space-5);
+  padding: var(--space-1);
+  background: var(--bg-primary);
+  border-radius: var(--radius-md);
+}
+
+.tab {
+  flex: 1;
+  padding: var(--space-3) var(--space-4);
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.tab:hover {
+  color: var(--text-primary);
+}
+
+.tab.active {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+/* Spinner */
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border);
+  border-top-color: var(--brand-500);
+  border-radius: var(--radius-full);
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Toast */
+.toast-container {
+  position: fixed;
+  top: var(--space-5);
+  right: var(--space-5);
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.toast {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  font-size: 13px;
+  box-shadow: var(--shadow-md);
+  animation: slideIn 0.25s ease;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 200px;
+}
+
+.toast.success { border-left: 3px solid var(--success); }
+.toast.error { border-left: 3px solid var(--danger); }
+.toast.info { border-left: 3px solid var(--info); }
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* Steps */
+.steps {
+  margin: var(--space-5) 0;
+}
+
+.step {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  opacity: 0.4;
+  transition: opacity var(--transition-base);
+}
+
+.step.active { opacity: 1; }
+.step.done { opacity: 1; }
+
+.step-number {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.step.active .step-number {
+  border-color: var(--brand-500);
+  color: var(--brand-400);
+}
+
+.step.done .step-number {
+  background: var(--success);
+  border-color: var(--success);
+  color: white;
+}
+
+.step-content { flex: 1; padding-top: 2px; }
+.step-title { font-weight: 500; font-size: 14px; margin-bottom: var(--space-1); }
+.step-desc { font-size: 12px; color: var(--text-muted); }
+
+/* Auth URL Box */
+.auth-url-box {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  font-size: 12px;
+  word-break: break-all;
+  color: var(--text-muted);
+  max-height: 80px;
+  overflow-y: auto;
+  margin-bottom: var(--space-3);
+}
+
+.auth-url-box a {
+  color: var(--brand-400);
+  text-decoration: none;
+}
+
+.auth-url-box a:hover {
+  text-decoration: underline;
+}
+
+/* Login Page */
+.login-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: var(--space-6);
+}
+
+.login-box {
+  width: 100%;
+  max-width: 400px;
+}
+
+.login-logo {
+  width: 56px;
+  height: 56px;
+  background: var(--brand-600);
+  border-radius: var(--radius-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-5);
+  color: white;
+}
+
+.login-logo .icon { width: 28px; height: 28px; }
+
+.login-title {
+  text-align: center;
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: var(--space-1);
+  letter-spacing: -0.02em;
+}
+
+.login-subtitle {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-bottom: var(--space-8);
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: var(--space-12) var(--space-6);
+  color: var(--text-muted);
+}
+
+.empty-state .icon {
+  width: 40px;
+  height: 40px;
+  margin-bottom: var(--space-4);
+  opacity: 0.4;
+}
+
+.empty-state p {
+  font-size: 14px;
+}
+
+/* Code Block */
+.code-block {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform var(--transition-base);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .main-content {
+    margin-left: 0;
+    padding: var(--space-4);
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .topbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-4);
+  }
+
+  .topbar-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+const API='';
+/*__API_KEY__*/
+
+const Router={
+  current:'login',
+  navigate(route){this.current=route;App.render()}
+};
+
+const Store={
+  user:null,
+  init(){
+    const saved=localStorage.getItem('qw2a_user');
+    if(saved){this.user=JSON.parse(saved);Router.navigate('dashboard')}
+    else Router.navigate('login')
+  },
+  set(u){this.user=u;localStorage.setItem('qw2a_user',JSON.stringify(u))},
+  clear(){this.user=null;localStorage.removeItem('qw2a_user');Router.navigate('login')}
+};
+
+const api={
+  async call(path,opts={}){
+    const res=await fetch(API+path,{
+      ...opts,
+      headers:{...opts.headers||{}}
+    });
+    if(res.status===401){Store.clear();throw new Error('未授权')}
+    return res
+  },
+  headers(){
+    if(!Store.user)return{};
+    return{'Authorization':'Bearer '+Store.user.api_key,'Content-Type':'application/json'}
+  },
+  async login(apiKey){
+    const res=await fetch(API+'/v1/models',{headers:{'Authorization':'Bearer '+apiKey}});
+    if(res.status===401)throw new Error('API Key 无效');
+    const isAdmin=(apiKey===window.__API_KEY__);
+    Store.set({api_key:apiKey,role:isAdmin?'admin':'user',name:isAdmin?'管理员':'用户'});
+    return Store.user
+  },
+  async getUserStatus(){return this.call('/api/user/status',{headers:this.headers()})},
+  async getUserQuota(){return this.call('/api/user/quota',{headers:this.headers()})},
+  async refreshQuota(){return this.call('/api/user/quota/refresh',{method:'POST',headers:this.headers()})},
+  async getLoginUrl(){return this.call('/api/user/login/url',{method:'POST',headers:this.headers()})},
+  async pollLogin(sid){return this.call('/api/user/login/poll',{method:'POST',headers:this.headers(),body:JSON.stringify({session_id:sid})})},
+  async deleteAccount(uid){return this.call('/api/user/accounts/'+uid,{method:'DELETE',headers:this.headers()})},
+  async getUsers(){return this.call('/api/admin/users',{headers:this.headers()})},
+  async createUser(name,password,role){return this.call('/api/admin/users',{method:'POST',headers:this.headers(),body:JSON.stringify({name,password,role})})},
+  async deleteUser(id){return this.call('/api/admin/users/'+id,{method:'DELETE',headers:this.headers()})},
+  async getStats(){return this.call('/api/admin/stats',{headers:this.headers()})}
+};
+
+const Toast={
+  show(msg,type='info'){
+    const el=document.createElement('div');
+    el.className='toast '+type;
+    const icons={success:'✓',error:'✕',info:'ℹ'};
+    el.innerHTML='<span style="font-weight:600">'+icons[type]+'</span><span>'+msg+'</span>';
+    document.getElementById('toastContainer').appendChild(el);
+    setTimeout(()=>el.remove(),4000)
+  }
+};
+
+const App={
+  render(){
+    const app=document.getElementById('app');
+    if(!Store.user){app.innerHTML=this.loginPage();this.bindLogin();return}
+    app.innerHTML=this.mainLayout();
+    this.loadCurrentPage()
+  },
+
+  loginPage(){
+    return '<div class="login-wrap"><div class="login-box">'+
+      '<div class="login-logo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg></div>'+
+      '<h1 class="login-title">QoderWork2API</h1>'+
+      '<p class="login-subtitle">登录到管理面板</p>'+
+      '<div class="card">'+
+        '<div class="tabs">'+
+          '<button class="tab active" id="tabUser">用户登录</button>'+
+          '<button class="tab" id="tabAdmin">管理员</button>'+
+        '</div>'+
+        '<div id="userLoginForm">'+
+          '<div class="form-group"><label class="form-label">用户名</label><input class="form-input" id="loginName" placeholder="输入用户名" autofocus></div>'+
+          '<div class="form-group"><label class="form-label">密码</label><input class="form-input" id="loginPwd" type="password" placeholder="输入密码"></div>'+
+          '<button class="btn btn-primary" style="width:100%;justify-content:center" id="btnUserLogin">登录</button>'+
+        '</div>'+
+        '<div id="adminLoginForm" style="display:none">'+
+          '<div class="form-group"><label class="form-label">管理员 API Key</label><input class="form-input" id="loginKey" type="password" placeholder="输入管理员 Key"></div>'+
+          '<button class="btn btn-primary" style="width:100%;justify-content:center" id="btnAdminLogin">登录</button>'+
+        '</div>'+
+      '</div>'+
+    '</div></div>'
+  },
+
+  bindLogin(){
+    const tabUser=document.getElementById('tabUser');
+    const tabAdmin=document.getElementById('tabAdmin');
+    const userForm=document.getElementById('userLoginForm');
+    const adminForm=document.getElementById('adminLoginForm');
+
+    tabUser.onclick=()=>{
+      tabUser.classList.add('active');
+      tabAdmin.classList.remove('active');
+      userForm.style.display='block';
+      adminForm.style.display='none';
+    };
+    tabAdmin.onclick=()=>{
+      tabAdmin.classList.add('active');
+      tabUser.classList.remove('active');
+      adminForm.style.display='block';
+      userForm.style.display='none';
+    };
+
+    const nameInput=document.getElementById('loginName');
+    const pwdInput=document.getElementById('loginPwd');
+    const btnUser=document.getElementById('btnUserLogin');
+
+    const doUserLogin=async()=>{
+      const name=nameInput.value.trim();
+      const pwd=pwdInput.value;
+      if(!name||!pwd)return Toast.show('请输入用户名和密码','error');
+      btnUser.disabled=true;btnUser.textContent='登录中...';
+      try{
+        const res=await fetch(API+'/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,password:pwd})});
+        if(!res.ok){const d=await res.json();throw new Error(d.error||'登录失败')}
+        const data=await res.json();
+        Store.set(data);
+        Toast.show('登录成功','success');
+        Router.navigate('dashboard');
+      }catch(e){Toast.show(e.message,'error')}
+      finally{btnUser.disabled=false;btnUser.textContent='登录'}
+    };
+    pwdInput.addEventListener('keydown',e=>{if(e.key==='Enter')doUserLogin()});
+    btnUser.addEventListener('click',doUserLogin);
+
+    const keyInput=document.getElementById('loginKey');
+    const btnAdmin=document.getElementById('btnAdminLogin');
+    const doAdminLogin=async()=>{
+      const k=keyInput.value.trim();
+      if(!k)return Toast.show('请输入 API Key','error');
+      btnAdmin.disabled=true;btnAdmin.textContent='登录中...';
+      try{
+        await api.login(k);
+        Toast.show('登录成功','success');
+        Router.navigate('dashboard');
+      }catch(e){Toast.show(e.message,'error')}
+      finally{btnAdmin.disabled=false;btnAdmin.textContent='登录'}
+    };
+    keyInput.addEventListener('keydown',e=>{if(e.key==='Enter')doAdminLogin()});
+    btnAdmin.addEventListener('click',doAdminLogin)
+  },
+
+  mainLayout(){
+    const u=Store.user;
+    const isAdmin=u.role==='admin';
+    const dashActive=Router.current==='dashboard'?'active':'';
+    const accActive=Router.current==='accounts'?'active':'';
+    const usersActive=Router.current==='users'?'active':'';
+    const statsActive=Router.current==='stats'?'active':'';
+    const settingsActive=Router.current==='settings'?'active':'';
+
+    let nav='<a href="#" data-route="dashboard" class="sidebar-link '+dashActive+'"><span class="icon icon-dashboard"></span>仪表盘</a>'+
+      '<a href="#" data-route="accounts" class="sidebar-link '+accActive+'"><span class="icon icon-key"></span>我的账号</a>';
+
+    if(isAdmin){
+      nav+='<div class="sidebar-section">管理</div>'+
+        '<a href="#" data-route="users" class="sidebar-link '+usersActive+'"><span class="icon icon-users"></span>用户管理</a>'+
+        '<a href="#" data-route="stats" class="sidebar-link '+statsActive+'"><span class="icon icon-activity"></span>全局统计</a>';
+    }
+
+    return '<div class="app">'+
+      '<nav class="sidebar">'+
+        '<div class="sidebar-header"><div class="sidebar-brand"><div class="sidebar-brand-icon"><span class="icon icon-dashboard"></span></div>QoderWork2API</div></div>'+
+        '<div class="sidebar-nav">'+nav+'</div>'+
+        '<div class="sidebar-footer">'+
+          '<div class="sidebar-section">系统</div>'+
+          '<a href="#" data-route="settings" class="sidebar-link '+settingsActive+'"><span class="icon icon-settings"></span>设置</a>'+
+          '<a href="#" id="btnLogout" class="sidebar-link"><span class="icon icon-logout"></span>退出登录</a>'+
+        '</div>'+
+      '</nav>'+
+      '<main class="main-content" id="mainContent"></main>'+
+    '</div>'
+  },
+
+  async loadCurrentPage(){
+    const main=document.getElementById('mainContent');
+    document.querySelectorAll('.sidebar-link[data-route]').forEach(a=>{
+      a.onclick=e=>{e.preventDefault();Router.navigate(a.dataset.route);App.render()}
+    });
+    document.getElementById('btnLogout').onclick=()=>{Store.clear()};
+
+    switch(Router.current){
+      case 'dashboard':return this.dashboardPage(main);
+      case 'accounts':return this.accountsPage(main);
+      case 'users':return this.usersPage(main);
+      case 'stats':return this.statsPage(main);
+      case 'settings':return this.settingsPage(main);
+      default:return this.dashboardPage(main)
+    }
+  },
+
+  async dashboardPage(el){
+    el.innerHTML='<div class="topbar"><h1 class="topbar-title">仪表盘</h1></div><div style="display:flex;justify-content:center;padding:60px"><div class="spinner"></div></div>';
+    try{
+      const [statusRes,quotaRes]=await Promise.all([api.getUserStatus(),api.getUserQuota()]);
+      const data=await statusRes.json();
+      const qData=await quotaRes.json();
+      const accounts=data.accounts||[];
+      const totalCredits=qData.accounts?.reduce((s,a)=>s+(a.realtime_credits||a.credits||0),0)||0;
+      const healthy=accounts.filter(a=>!a.disabled&&!a.cooling).length;
+      const userName=Store.user.name||'用户';
+      const roleLabel=Store.user.role==='admin'?'管理员':'用户';
+
+      let accountRows='';
+      if(accounts.length===0){
+        accountRows='<tr><td colspan="4"><div class="empty-state"><p>暂无账号，请前往「我的账号」添加</p></div></td></tr>'
+      }else{
+        for(const a of accounts){
+          const c=a.credits||0;
+          const statusClass=a.disabled?'badge-danger':a.cooling?'badge-warning':'badge-success';
+          const statusText=a.disabled?'已禁用':a.cooling?'冷却中':'正常';
+          const color=c>1000?'text-success':c>100?'text-warning':'text-danger';
+          const nick=this.escape(a.nickname||'-');
+          accountRows+='<tr>'+
+            '<td><strong>'+nick+'</strong></td>'+
+            '<td class="'+color+'"><strong>'+c.toLocaleString()+'</strong></td>'+
+            '<td><span class="badge '+statusClass+'">'+statusText+'</span></td>'+
+            '<td class="text-mono text-muted">'+a.uid.slice(0,8)+'...</td>'+
+          '</tr>'
+        }
+      }
+
+      el.innerHTML=
+        '<div class="topbar"><h1 class="topbar-title">仪表盘</h1><div class="user-menu"><span class="user-name">'+userName+'</span><div class="user-avatar">'+userName[0].toUpperCase()+'</div></div></div>'+
+        '<div class="stats-grid">'+
+          '<div class="stat-card"><div class="stat-label">账号总数</div><div class="stat-value info">'+accounts.length+'</div></div>'+
+          '<div class="stat-card"><div class="stat-label">正常账号</div><div class="stat-value success">'+healthy+'</div></div>'+
+          '<div class="stat-card"><div class="stat-label">总积分</div><div class="stat-value">'+totalCredits.toLocaleString()+'</div></div>'+
+          '<div class="stat-card"><div class="stat-label">我的角色</div><div class="stat-value" style="font-size:16px">'+roleLabel+'</div></div>'+
+        '</div>'+
+        '<div class="card">'+
+          '<div class="card-header"><h2 class="card-title">账号概览</h2></div>'+
+          '<div class="table-container"><table><thead><tr><th>昵称</th><th>积分</th><th>状态</th><th>UID</th></tr></thead><tbody>'+accountRows+'</tbody></table></div>'+
+        '</div>'
+    }catch(e){el.innerHTML='<div class="card"><p class="text-danger">加载失败: '+e.message+'</p></div>'}
+  },
+
+  async accountsPage(el){
+    const refresh=async()=>{
+      try{
+        const [statusRes,quotaRes]=await Promise.all([api.getUserStatus(),api.getUserQuota()]);
+        const data=await statusRes.json();
+        const qData=await quotaRes.json();
+        const accounts=data.accounts||[];
+        const quotaMap={};
+        (qData.accounts||[]).forEach(a=>{quotaMap[a.uid]=a});
+
+        const list=document.getElementById('accountsTable');
+        if(accounts.length===0){
+          list.innerHTML='<tr><td colspan="6"><div class="empty-state"><p>暂无账号，点击右上角添加</p></div></td></tr>'
+        }else{
+          let rows='';
+          for(const a of accounts){
+            const q=quotaMap[a.uid];
+            const realtime=q?.realtime_credits;
+            const credits=a.credits||0;
+            const total=6100;
+            const pct=Math.min(100,Math.round((credits/total)*100));
+            const barColor=credits>1000?'progress-high':credits>100?'progress-mid':'progress-low';
+            const statusClass=a.disabled?'badge-danger':a.cooling?'badge-warning':'badge-success';
+            const statusText=a.disabled?'已禁用':a.cooling?'冷却中':'正常';
+            const nick=this.escape(a.nickname||'-');
+            const realtimeHtml=realtime!==undefined?'<br><span class="text-muted" style="font-size:11px">实时: '+realtime+'</span>':'';
+            rows+='<tr>'+
+              '<td><span class="badge '+statusClass+'">'+statusText+'</span></td>'+
+              '<td><strong>'+nick+'</strong></td>'+
+              '<td><strong>'+credits.toLocaleString()+'</strong>'+realtimeHtml+'</td>'+
+              '<td><div class="credits-bar"><div class="credits-bar-fill '+barColor+'" style="width:'+pct+'%"></div></div></td>'+
+              '<td class="text-mono text-muted">'+a.uid.slice(0,12)+'...</td>'+
+              '<td><button class="btn btn-danger btn-sm btn-del" data-uid="'+a.uid+'" data-name="'+nick+'"><span class="icon icon-trash"></span></button></td>'+
+            '</tr>'
+          }
+          list.innerHTML=rows
+        }
+
+        const total=accounts.length;
+        const healthy=accounts.filter(a=>!a.disabled&&!a.cooling).length;
+        const totalCredits=accounts.reduce((s,a)=>s+(a.credits||0),0);
+        document.getElementById('statTotal').textContent=total;
+        document.getElementById('statHealthy').textContent=healthy;
+        document.getElementById('statCredits').textContent=totalCredits.toLocaleString();
+      }catch(e){Toast.show('加载失败: '+e.message,'error')}
+    };
+
+    el.innerHTML=
+      '<div class="topbar"><h1 class="topbar-title">我的账号</h1><div class="topbar-actions">'+
+        '<button class="btn btn-secondary btn-sm" id="btnRefresh"><span class="icon icon-refresh"></span> 刷新积分</button>'+
+        '<button class="btn btn-primary" id="btnAdd"><span class="icon icon-plus"></span> 添加账号</button>'+
+      '</div></div>'+
+      '<div class="stats-grid">'+
+        '<div class="stat-card"><div class="stat-label">总数</div><div class="stat-value info" id="statTotal">0</div></div>'+
+        '<div class="stat-card"><div class="stat-label">正常</div><div class="stat-value success" id="statHealthy">0</div></div>'+
+        '<div class="stat-card"><div class="stat-label">总积分</div><div class="stat-value" id="statCredits">0</div></div>'+
+      '</div>'+
+      '<div class="card"><div class="table-container"><table>'+
+        '<thead><tr><th>状态</th><th>昵称</th><th>积分</th><th>进度</th><th>UID</th><th>操作</th></tr></thead>'+
+        '<tbody id="accountsTable"><tr><td colspan="6"><div class="empty-state"><p>加载中...</p></div></td></tr></tbody>'+
+      '</table></div></div>';
+
+    document.getElementById('btnAdd').onclick=()=>this.showAddModal(refresh);
+    document.getElementById('btnRefresh').onclick=async()=>{
+      try{await api.refreshQuota();Toast.show('积分已刷新','success');refresh()}
+      catch(e){Toast.show('刷新失败: '+e.message,'error')}
+    };
+    refresh()
+  },
+
+  showAddModal(onSuccess){
+    const modal=document.createElement('div');
+    modal.className='modal-overlay active';
+    modal.id='addModal';
+    modal.innerHTML=
+      '<div class="modal">'+
+        '<div class="modal-header"><h3 class="modal-title">添加新账号</h3><button class="modal-close" onclick="document.getElementById(\'addModal\').remove()"><span class="icon icon-x"></span></button></div>'+
+        '<div class="modal-body">'+
+          '<div class="steps">'+
+            '<div class="step active" id="step1"><div class="step-number">1</div><div class="step-content"><div class="step-title">生成授权链接</div><div class="step-desc">点击按钮生成 OAuth 授权链接</div></div></div>'+
+            '<div class="step" id="step2"><div class="step-number">2</div><div class="step-content"><div class="step-title">浏览器授权</div><div class="step-desc">在浏览器中打开链接并登录授权</div></div></div>'+
+            '<div class="step" id="step3"><div class="step-number">3</div><div class="step-content"><div class="step-title">完成登录</div><div class="step-desc">授权完成后自动获取 token 并保存</div></div></div>'+
+          '</div>'+
+          '<div id="loginForm"><button class="btn btn-primary" style="width:100%;justify-content:center" id="btnGenUrl"><span class="icon icon-plus"></span> 生成授权链接</button></div>'+
+          '<div id="authUrlSection" style="display:none">'+
+            '<label class="form-label">请在浏览器打开以下链接：</label>'+
+            '<div class="auth-url-box" id="authUrlBox"></div>'+
+            '<button class="btn btn-primary" style="width:100%;justify-content:center" id="btnPoll"><span class="icon icon-check"></span> 已完成授权</button>'+
+          '</div>'+
+          '<div id="pollingStatus" style="display:none;text-align:center;padding:20px 0">'+
+            '<div class="spinner" style="margin:0 auto 12px"></div>'+
+            '<p class="text-muted">等待授权完成...</p>'+
+          '</div>'+
+        '</div>'+
+      '</div>';
+    document.body.appendChild(modal);
+
+    const updateStep=n=>{
+      for(let i=1;i<=3;i++){
+        const el=document.getElementById('step'+i);
+        if(i<n)el.className='step done';
+        else if(i===n)el.className='step active';
+        else el.className='step'
+      }
+    };
+
+    document.getElementById('btnGenUrl').onclick=async()=>{
+      try{
+        const res=await api.getLoginUrl();
+        const data=await res.json();
+        document.getElementById('loginForm').style.display='none';
+        document.getElementById('authUrlSection').style.display='block';
+        document.getElementById('authUrlBox').innerHTML='<a href="'+data.auth_url+'" target="_blank" id="authLink">'+data.auth_url+'</a>';
+        document.getElementById('authLink').click();
+        updateStep(2);
+
+        document.getElementById('btnPoll').onclick=async()=>{
+          document.getElementById('authUrlSection').style.display='none';
+          document.getElementById('pollingStatus').style.display='block';
+          updateStep(3);
+          const poll=setInterval(async()=>{
+            try{
+              const r=await api.pollLogin(data.session_id);
+              if(r.status===200){
+                clearInterval(poll);
+                const d=await r.json();
+                Toast.show('账号 "'+d.nickname+'" 添加成功','success');
+                modal.remove();
+                if(onSuccess)onSuccess()
+              }else if(r.status===202){
+                // 等待授权，继续轮询
+              }else{
+                // 404: 会话过期, 500: 服务器错误
+                clearInterval(poll);
+                const d=await r.json().catch(()=>({}));
+                Toast.show(d.error||d.message||'登录失败，请重试','error');
+                modal.remove()
+              }
+            }catch(e){clearInterval(poll);Toast.show('网络错误: '+e.message,'error');modal.remove()}
+          },3000)
+        }
+      }catch(e){Toast.show('生成失败: '+e.message,'error')}
+    }
+  },
+
+  async deleteAccount(uid,name){
+    if(!confirm('确定删除账号 "'+name+'"？'))return;
+    try{
+      await api.deleteAccount(uid);
+      Toast.show('已删除','success');
+      Router.navigate('accounts');App.render()
+    }catch(e){Toast.show('删除失败: '+e.message,'error')}
+  },
+
+  async usersPage(el){
+    if(Store.user.role!=='admin'){el.innerHTML='<div class="card"><p class="text-danger">无权访问</p></div>';return}
+    el.innerHTML='<div class="topbar"><h1 class="topbar-title">用户管理</h1><button class="btn btn-primary" id="btnCreateUser"><span class="icon icon-plus"></span> 创建用户</button></div><div style="display:flex;justify-content:center;padding:60px"><div class="spinner"></div></div>';
+
+    const loadUsers=async()=>{
+      try{
+        const res=await api.getUsers();
+        const data=await res.json();
+        const users=data.users||[];
+
+        let rows='';
+        if(users.length===0){
+          rows='<tr><td colspan="6"><div class="empty-state"><p>暂无用户</p></div></td></tr>'
+        }else{
+          for(const u of users){
+            const rc=u.role==='admin'?'badge-info':'badge-success';
+            const rt=u.role==='admin'?'管理员':'用户';
+            const nick=this.escape(u.name);
+            rows+='<tr>'+
+              '<td><strong>'+nick+'</strong></td>'+
+              '<td><code class="text-mono">'+u.api_key+'</code></td>'+
+              '<td><span class="badge '+rc+'">'+rt+'</span></td>'+
+              '<td>'+(u.acc_count||0)+'</td>'+
+              '<td class="text-muted" style="font-size:12px">'+new Date(u.created_at).toLocaleDateString()+'</td>'+
+              '<td><button class="btn btn-danger btn-sm btn-del-user" data-user-id="'+u.id+'" data-user-name="'+nick+'"><span class="icon icon-trash"></span></button></td>'+
+            '</tr>'
+          }
+        }
+
+        el.innerHTML=
+          '<div class="topbar"><h1 class="topbar-title">用户管理</h1><button class="btn btn-primary" id="btnCreateUser"><span class="icon icon-plus"></span> 创建用户</button></div>'+
+          '<div class="card"><div class="table-container"><table>'+
+            '<thead><tr><th>用户名</th><th>API Key</th><th>角色</th><th>账号数</th><th>创建时间</th><th>操作</th></tr></thead>'+
+            '<tbody>'+rows+'</tbody>'+
+          '</table></div></div>';
+        document.getElementById('btnCreateUser').onclick=()=>this.showCreateUserModal(loadUsers)
+      }catch(e){Toast.show('加载失败: '+e.message,'error')}
+    };
+    loadUsers()
+  },
+
+  showCreateUserModal(onSuccess){
+    const modal=document.createElement('div');
+    modal.className='modal-overlay active';
+    modal.id='createUserModal';
+    modal.innerHTML=
+      '<div class="modal">'+
+        '<div class="modal-header"><h3 class="modal-title">创建用户</h3><button class="modal-close" onclick="document.getElementById(\'createUserModal\').remove()"><span class="icon icon-x"></span></button></div>'+
+        '<div class="modal-body">'+
+          '<div class="form-group"><label class="form-label">用户名</label><input class="form-input" id="newUserName" placeholder="输入用户名"></div>'+
+          '<div class="form-group"><label class="form-label">密码</label><input class="form-input" id="newUserPwd" type="password" placeholder="输入登录密码"></div>'+
+          '<div class="form-group"><label class="form-label">角色</label><select class="form-input" id="newUserRole"><option value="user">普通用户</option><option value="admin">管理员</option></select></div>'+
+        '</div>'+
+        '<div class="modal-footer"><button class="btn btn-ghost" onclick="document.getElementById(\'createUserModal\').remove()">取消</button><button class="btn btn-primary" id="btnSubmitCreate">创建</button></div>'+
+      '</div>';
+    document.body.appendChild(modal);
+    document.getElementById('btnSubmitCreate').onclick=async()=>{
+      const name=document.getElementById('newUserName').value.trim();
+      const pwd=document.getElementById('newUserPwd').value;
+      const role=document.getElementById('newUserRole').value;
+      if(!name||!pwd)return Toast.show('请输入用户名和密码','error');
+      try{
+        const res=await api.createUser(name,pwd,role);
+        const data=await res.json();
+        Toast.show('用户 '+data.name+' 创建成功','success');
+        modal.remove();
+        if(onSuccess)onSuccess()
+      }catch(e){Toast.show('创建失败: '+e.message,'error')}
+    }
+  },
+
+  async deleteUser(id,name){
+    if(!confirm('确定删除用户 "'+name+'"？其所有账号也将被移除。'))return;
+    try{
+      await api.deleteUser(id);
+      Toast.show('用户已删除','success');
+      Router.navigate('users');App.render()
+    }catch(e){Toast.show('删除失败: '+e.message,'error')}
+  },
+
+  async statsPage(el){
+    if(Store.user.role!=='admin'){el.innerHTML='<div class="card"><p class="text-danger">无权访问</p></div>';return}
+    el.innerHTML='<div class="topbar"><h1 class="topbar-title">全局统计</h1></div><div style="display:flex;justify-content:center;padding:60px"><div class="spinner"></div></div>';
+    try{
+      const res=await api.getStats();
+      const data=await res.json();
+      let userRows='';
+      for(const u of (data.users||[])){
+        userRows+='<tr><td>'+this.escape(u.name)+'</td><td>'+u.acc_count+'</td><td>'+ (u.credits||0).toLocaleString()+'</td></tr>'
+      }
+      el.innerHTML=
+        '<div class="topbar"><h1 class="topbar-title">全局统计</h1></div>'+
+        '<div class="stats-grid">'+
+          '<div class="stat-card"><div class="stat-label">总用户数</div><div class="stat-value info">'+(data.total_users||0)+'</div></div>'+
+          '<div class="stat-card"><div class="stat-label">总账号数</div><div class="stat-value success">'+(data.total_accounts||0)+'</div></div>'+
+          '<div class="stat-card"><div class="stat-label">总积分</div><div class="stat-value">'+((data.total_credits||0).toLocaleString())+'</div></div>'+
+        '</div>'+
+        '<div class="card"><h3 style="margin-bottom:16px;font-size:15px;font-weight:600">用户详情</h3>'+
+          '<div class="table-container"><table><thead><tr><th>用户名</th><th>账号数</th><th>积分</th></tr></thead><tbody>'+userRows+'</tbody></table></div>'+
+        '</div>'
+    }catch(e){Toast.show('加载失败: '+e.message,'error')}
+  },
+
+  settingsPage(el){
+    const u=Store.user;
+    const roleLabel=u.role==='admin'?'管理员':'用户';
+    el.innerHTML=
+      '<div class="topbar"><h1 class="topbar-title">设置</h1></div>'+
+      '<div class="card">'+
+        '<div class="card-header"><h2 class="card-title">账户信息</h2></div>'+
+        '<p style="margin-bottom:8px"><strong class="text-muted">用户名:</strong> '+this.escape(u.name||'-')+'</p>'+
+        '<p style="margin-bottom:8px"><strong class="text-muted">角色:</strong> '+roleLabel+'</p>'+
+        '<p><strong class="text-muted">API Key:</strong> <code class="text-mono" style="font-size:11px">'+u.api_key+'</code></p>'+
+      '</div>'+
+      '<div class="card">'+
+        '<div class="card-header"><h2 class="card-title">API 文档</h2></div>'+
+        '<p style="margin-bottom:8px"><strong>Chat Completions:</strong></p>'+
+        '<div class="code-block">POST /v1/chat/completions\nAuthorization: Bearer '+u.api_key+'\n\n{"model":"qwen3.8-max-preview","messages":[{"role":"user","content":"你好"}]}</div>'+
+        '<p style="margin-top:16px;margin-bottom:8px"><strong>可用模型:</strong></p>'+
+        '<p class="text-muted" style="font-size:13px">qwen3.8-max-preview, qwen3.7-max, deepseek-v4-pro, deepseek-v4-flash, glm-5.2, kimi-k2.7-code, minimax-m2.7, auto</p>'+
+      '</div>'
+  },
+
+  escape(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+};
+
+// Event delegation for delete buttons
+document.addEventListener('click',(e)=>{
+  const delBtn=e.target.closest('.btn-del');
+  if(delBtn){
+    e.preventDefault();
+    App.deleteAccount(delBtn.dataset.uid,delBtn.dataset.name);
+    return
+  }
+  const delUserBtn=e.target.closest('.btn-del-user');
+  if(delUserBtn){
+    e.preventDefault();
+    App.deleteUser(delUserBtn.dataset.userId,delUserBtn.dataset.userName);
+    return
+  }
+});
+
+Store.init();
+</script>
+</body>
+</html>

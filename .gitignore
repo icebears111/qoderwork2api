@@ -1,0 +1,25 @@
+# Auth & secrets
+auths/
+data/
+*.key
+*.pem
+
+# Binaries
+login
+credit
+qw2api
+
+# Config with secrets (use config.example.json)
+config.json
+
+# Build artifacts
+*.tmp
+__pycache__/
+
+# IDE
+.idea/
+.vscode/
+SPEC.md
+LOOP.md
+PLAN.md
+docs/
