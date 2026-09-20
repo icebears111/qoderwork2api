@@ -76,3 +76,24 @@ func extractKey(r *http.Request) string {
 	}
 	return ""
 }
+
+// requireGlobalKey 只认全局 key —— 用于**管理接口**（key 的发放与吊销）。
+//
+// 为什么不复用 AuthMiddleware：它同时接受 UserStore 里的用户 key，而那些
+// 是"用池子"的凭证。管理面必须收窄到全局 key（只存在于服务器与运维手里），
+// 否则任何一把外传的调用方 key 都能给自己签发新 key。
+// 全局 key 为空表示未配置，此时放行（内网自用模式，与其它桥一致）。
+func requireGlobalKey(apiKey string, next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if apiKey == "" {
+			next(w, r)
+			return
+		}
+		if extractKey(r) != apiKey {
+			writeOpenAIError(w, http.StatusUnauthorized, "invalid_api_key",
+				"missing or invalid API key")
+			return
+		}
+		next(w, r)
+	}
+}

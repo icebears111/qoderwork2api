@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"qoderwork2api/internal/cred"
+	"qoderwork2api/internal/apikey"
 	"qoderwork2api/internal/pool"
 	"qoderwork2api/internal/upstream"
 	"qoderwork2api/internal/user"
@@ -35,6 +36,9 @@ type Config struct {
 	AuthDir      string
 	OnReload     func()
 	UserStore    *user.Store
+	// KeyStore 多 key 表（看板发放的 sk- 调用凭证）。
+	// 与全局 APIKey、UserStore 三者并存；nil 表示该功能未启用。
+	KeyStore     *apikey.Store
 	PoolMgr      *user.PoolManager
 }
 
@@ -90,6 +94,21 @@ func NewHandler(cfg Config) *Handler {
 	adminAPI.Register(adminMux)
 	h.mux.Handle("/api/admin/", http.StripPrefix("/api/admin", AuthMiddleware(h.cfg.UserStore, h.cfg.APIKey, RequireAdminMiddleware(adminMux))))
 
+	// 多 key 管理路由。
+	// 守卫用 requireGlobalKey，**只认全局 key** —— 若放开给调用方
+	// 自己的 key，任何一把外传的 key 就能给自己签发新 key（无限提权）。
+	// 路由必须带方法注册，否则与更宽的 catch-all 冲突（Go 1.22+ 会 panic）。
+	if h.cfg.KeyStore != nil {
+		guard := func(next http.HandlerFunc) http.HandlerFunc {
+			return requireGlobalKey(h.cfg.APIKey, next)
+		}
+		kh := apikey.NewHandler(h.cfg.KeyStore)
+		h.mux.HandleFunc("GET /admin/api/keys", guard(kh.List))
+		h.mux.HandleFunc("POST /admin/api/keys", guard(kh.Create))
+		h.mux.HandleFunc("DELETE /admin/api/keys/", guard(kh.Delete))
+		h.mux.HandleFunc("GET /admin/api/keys/", guard(kh.Get))
+	}
+
 	// 用户登录接口（公开）
 	h.mux.HandleFunc("POST /api/login", adminAPI.HandleUserLogin)
 
@@ -124,6 +143,16 @@ func (h *Handler) withAuth(next http.HandlerFunc) http.HandlerFunc {
 			ctx := context.WithValue(r.Context(), ctxKeyUser, adminUser)
 			next(w, r.WithContext(ctx))
 			return
+		}
+
+		// 多 key 表（看板发放的调用凭证）。
+		// 命中时不注入用户上下文 —— getUserPool 会回落到全局池，
+		// 即这些 key 用的是与全局 key 相同的账号池，语义与其他两座桥一致。
+		if h.cfg.KeyStore != nil {
+			if _, ok := h.cfg.KeyStore.Verify(key); ok {
+				next(w, r)
+				return
+			}
 		}
 
 		// 匹配普通用户

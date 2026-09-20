@@ -17,6 +17,7 @@ import (
 	"qoderwork2api/internal/scheduler"
 	"qoderwork2api/internal/server"
 	"qoderwork2api/internal/upstream"
+	"qoderwork2api/internal/apikey"
 	"qoderwork2api/internal/user"
 )
 
@@ -66,6 +67,23 @@ func main() {
 	})
 
 	// 加载用户存储
+	// 多 key 表（与全局 api_key、users.json 并存）。
+	// 加载失败不让服务起不来 —— 退回只用既有两种凭证，
+	// 否则一个损坏的 json 就能把整个网关拖死。
+	keysPath := cfg.KeysFile
+	if keysPath == "" {
+		keysPath = filepath.Join(absStateDir, "keys.json")
+	} else if !filepath.IsAbs(keysPath) {
+		keysPath = filepath.Join(absStateDir, keysPath)
+	}
+	keyStore, kerr := apikey.NewStore(keysPath)
+	if kerr != nil {
+		log.Printf("warning: load keys %s failed: %v (仅用全局 key 与用户表)", keysPath, kerr)
+		keyStore = nil
+	} else {
+		log.Printf("loaded %d api key(s) from %s", keyStore.Count(), keysPath)
+	}
+
 	userStorePath := filepath.Join(absStateDir, "users.json")
 	userStore, err := user.NewStore(userStorePath)
 	if err != nil {
@@ -109,6 +127,7 @@ func main() {
 		AuthDir:      absAuthDir,
 		OnReload:     onReload,
 		UserStore:    userStore,
+		KeyStore:     keyStore,
 		PoolMgr:      poolMgr,
 	})
 
