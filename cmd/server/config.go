@@ -14,11 +14,13 @@ import (
 type Config struct {
 	Listen    string `json:"listen"`
 	APIKey    string `json:"api_key"`
-	AuthDir    string `json:"auth_dir"`
+	AuthDir   string `json:"auth_dir"`
 	StateFile string `json:"state_file"`
 	// KeysFile 多 key 表（看板发放的 sk- 调用凭证）；留空用 <state_dir>/keys.json。
-	KeysFile  string `json:"keys_file"`
-	Region    string `json:"region"`
+	KeysFile string `json:"keys_file"`
+	// ModelsFile 模型启停表（看板「模型」页禁用/恢复）；留空用 <state_dir>/models.json。
+	ModelsFile string `json:"models_file"`
+	Region     string `json:"region"`
 
 	Cooldown struct {
 		HardCredit  string `json:"hard_credit"`
@@ -46,7 +48,7 @@ func Default() *Config {
 	c := &Config{
 		Listen:    ":7864",
 		APIKey:    "",
-		AuthDir:    "./auths",
+		AuthDir:   "./auths",
 		StateFile: "./data/state.json",
 		Region:    "cn",
 	}

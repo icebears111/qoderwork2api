@@ -12,12 +12,13 @@ import (
 	"syscall"
 	"time"
 
+	"qoderwork2api/internal/apikey"
 	"qoderwork2api/internal/cred"
+	"qoderwork2api/internal/modelstate"
 	"qoderwork2api/internal/pool"
 	"qoderwork2api/internal/scheduler"
 	"qoderwork2api/internal/server"
 	"qoderwork2api/internal/upstream"
-	"qoderwork2api/internal/apikey"
 	"qoderwork2api/internal/user"
 )
 
@@ -84,6 +85,17 @@ func main() {
 		log.Printf("loaded %d api key(s) from %s", keyStore.Count(), keysPath)
 	}
 
+	// 模型启停表。**永不失败**（NewStore 内部对坏文件容错），
+	// 因为它的失败方向不该是「网关起不来」—— 那连转发都停了。
+	modelsPath := cfg.ModelsFile
+	if modelsPath == "" {
+		modelsPath = filepath.Join(absStateDir, "models.json")
+	} else if !filepath.IsAbs(modelsPath) {
+		modelsPath = filepath.Join(absStateDir, modelsPath)
+	}
+	modelStore := modelstate.NewStore(modelsPath)
+	log.Printf("model state: %d disabled (%s)", modelStore.Count(), modelsPath)
+
 	userStorePath := filepath.Join(absStateDir, "users.json")
 	userStore, err := user.NewStore(userStorePath)
 	if err != nil {
@@ -128,6 +140,7 @@ func main() {
 		OnReload:     onReload,
 		UserStore:    userStore,
 		KeyStore:     keyStore,
+		ModelState:   modelStore,
 		PoolMgr:      poolMgr,
 	})
 
