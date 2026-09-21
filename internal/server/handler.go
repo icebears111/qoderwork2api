@@ -18,6 +18,7 @@ import (
 	"qoderwork2api/internal/modelstate"
 	"qoderwork2api/internal/pool"
 	"qoderwork2api/internal/upstream"
+	"qoderwork2api/internal/usagestat"
 	"qoderwork2api/internal/user"
 )
 
@@ -43,6 +44,8 @@ type Config struct {
 	// ModelState 模型启停表（看板「模型」页禁用/恢复）；nil = 功能未启用
 	// （读作「没有任何模型被禁用」，而不是「全部禁用」）。
 	ModelState *modelstate.Store
+	// UsageStats token 用量 / 缓存命中的按桶统计（看板「缓存命中」）；nil = 不统计。
+	UsageStats *usagestat.Store
 	PoolMgr    *user.PoolManager
 }
 
@@ -115,6 +118,8 @@ func NewHandler(cfg Config) *Handler {
 
 	// 模型启停：与 key 管理同一道守卫（全局 key，调用方 key 不得改模型状态）
 	h.mux.HandleFunc("POST /admin/api/models/state", requireGlobalKey(h.cfg.APIKey, h.adminSetModelState))
+	// 用量 / 缓存命中统计（看板「报表」页的缓存面板）
+	h.mux.HandleFunc("GET /admin/api/usage/stats", requireGlobalKey(h.cfg.APIKey, h.adminUsageStats))
 
 	// 用户登录接口（公开）
 	h.mux.HandleFunc("POST /api/login", adminAPI.HandleUserLogin)
@@ -304,6 +309,48 @@ func (h *Handler) visibleModelMap() map[string]string {
 // modelDisabled 该模型是否被看板禁用（大小写不敏感，ModelState 为 nil 时恒 false）。
 func (h *Handler) modelDisabled(name string) bool {
 	return h.cfg.ModelState != nil && h.cfg.ModelState.IsDisabled(name)
+}
+
+// recordUsage 记一次真实请求的 token 用量（含缓存命中）。
+//
+// prompt 直接取上游给的值：本桥不像 catpaw 那样在缺失时估算，
+// 上游不给就按 0 记（那说明这轮没上报用量，不该编一个数 ——
+// 编了会让命中率的分母虚高，把命中率算低）。
+func (h *Handler) recordUsage(up map[string]any) {
+	if h.cfg.UsageStats == nil || up == nil {
+		return
+	}
+	var prompt int64
+	switch n := up["prompt_tokens"].(type) {
+	case float64:
+		prompt = int64(n)
+	case int64:
+		prompt = n
+	case int:
+		prompt = int64(n)
+	}
+	h.cfg.UsageStats.Add(time.Now(), prompt, usagestat.CacheRead(up))
+}
+
+// adminUsageStats GET /admin/api/usage/stats
+// 看板「缓存命中」用：四窗口命中率 + 近 24 小时趋势。
+func (h *Handler) adminUsageStats(w http.ResponseWriter, r *http.Request) {
+	if h.cfg.UsageStats == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"enabled": false, "note": "本网关未启用用量统计",
+			"rates": map[string]any{}, "trend24h": []any{},
+		})
+		return
+	}
+	now := time.Now()
+	hit, input := h.cfg.UsageStats.TotalSnapshot()
+	writeJSON(w, http.StatusOK, map[string]any{
+		"enabled":      true,
+		"rates":        h.cfg.UsageStats.Rates(now),
+		"trend24h":     h.cfg.UsageStats.Trend24h(now),
+		"total":        map[string]any{"hitTokens": hit, "inputTokens": input},
+		"generated_at": now.Unix(),
+	})
 }
 
 // modelEntries 把模型名 + 上游键 + 动态元信息组装成 OpenAI 风格的条目。
@@ -541,13 +588,20 @@ func (h *Handler) chatCompletions(w http.ResponseWriter, r *http.Request) {
 					fl.Flush()
 				}
 			}
-			_ = upstream.StreamAsOpenAI(w, rc, req.Model, flush)
+			// 流式路径也要记用量：StreamAsOpenAI 边转发边抄 usage，
+			// 通过回调把手上的那份交出来（它不改动要下发的字节）。
+			_ = upstream.StreamAsOpenAI(w, rc, req.Model, flush, func(u map[string]any) {
+				h.recordUsage(u)
+			})
 			return
 		}
 		resp, err := upstream.AggregateNested(rc, req.Model)
 		if err != nil {
 			writeOpenAIError(w, http.StatusBadGateway, "upstream_parse", err.Error())
 			return
+		}
+		if u, ok := resp["usage"].(map[string]any); ok {
+			h.recordUsage(u)
 		}
 		writeJSON(w, http.StatusOK, resp)
 		return

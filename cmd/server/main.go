@@ -19,6 +19,7 @@ import (
 	"qoderwork2api/internal/scheduler"
 	"qoderwork2api/internal/server"
 	"qoderwork2api/internal/upstream"
+	"qoderwork2api/internal/usagestat"
 	"qoderwork2api/internal/user"
 )
 
@@ -96,6 +97,16 @@ func main() {
 	modelStore := modelstate.NewStore(modelsPath)
 	log.Printf("model state: %d disabled (%s)", modelStore.Count(), modelsPath)
 
+	// 用量 / 缓存命中统计。同样永不失败 —— 统计坏掉不该停转发。
+	statsPath := cfg.UsageStatsFile
+	if statsPath == "" {
+		statsPath = filepath.Join(absStateDir, "usage-stats.json")
+	} else if !filepath.IsAbs(statsPath) {
+		statsPath = filepath.Join(absStateDir, statsPath)
+	}
+	usageStats := usagestat.New(statsPath)
+	log.Printf("usage stats: %s", statsPath)
+
 	userStorePath := filepath.Join(absStateDir, "users.json")
 	userStore, err := user.NewStore(userStorePath)
 	if err != nil {
@@ -141,6 +152,7 @@ func main() {
 		UserStore:    userStore,
 		KeyStore:     keyStore,
 		ModelState:   modelStore,
+		UsageStats:   usageStats,
 		PoolMgr:      poolMgr,
 	})
 
@@ -166,4 +178,6 @@ func main() {
 		log.Fatalf("http: %v", err)
 	}
 	log.Printf("bye")
+	// 用量统计是节流写盘的（20 秒一次），退出前补一次，否则最后一段请求会丢
+	usageStats.Flush()
 }

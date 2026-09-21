@@ -206,9 +206,18 @@ func sortInts(a []int) {
 // 两个键，其中一个恒为空串（思考/正文交替阶段切换）。Anthropic 风格客户端
 // （CCD 等）看到「键集合变化」会误判内容块类型切换，把一段正文拆成多个独立
 // 消息块。这里删除空串键，保证每个 delta 至多只有一个内容键。
-func StreamAsOpenAI(w io.Writer, r io.Reader, model string, flush func()) error {
+// StreamAsOpenAI 把上游 SSE 边解析边转发成 OpenAI 流，并回传 usage。
+//
+// onUsage 是**可选**回调（可变参数，保持既有调用点不变）：上游把 usage
+// 放在最后一个 chunk 里，这里看到就抄一份交出去。抄的动作不改动任何
+// 要下发的字节 —— 提取失败也绝不影响转发。
+func StreamAsOpenAI(w io.Writer, r io.Reader, model string, flush func(),
+	onUsage ...func(map[string]any)) error {
 	sawDone := false
 	err := ParseNestedSSE(r, func(chunk map[string]any) error {
+		if u, ok := chunk["usage"].(map[string]any); ok && len(onUsage) > 0 && onUsage[0] != nil {
+			onUsage[0](u)
+		}
 		chunk["model"] = model
 		normalizeDeltaKeys(chunk)
 		raw, _ := json.Marshal(chunk)
