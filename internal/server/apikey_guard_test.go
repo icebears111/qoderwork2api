@@ -18,7 +18,7 @@ func TestAdminKeyRoutesRejectCallerKeys(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	callerKey, err := store.Create("caller", "")
+	callerKey, err := store.Create("caller", "", "someone")
 	if err != nil {
 		t.Fatal(err)
 	}

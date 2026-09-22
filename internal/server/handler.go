@@ -110,6 +110,16 @@ func NewHandler(cfg Config) *Handler {
 			return requireGlobalKey(h.cfg.APIKey, next)
 		}
 		kh := apikey.NewHandler(h.cfg.KeyStore)
+		// OwnerFrom **有意不设**（保持 nil = 管理员作用域）。
+		//
+		// 本桥没有多用户：账号归属与 SSO 身份头（X-Auth-User）都不存在，
+		// 成员在看板上也看不到这一家（前端 visibleGWs 只给 buddy）。
+		// 本桥自己有 user.Store（usr_ key + 角色），但那是**另一套**体系、
+		// 与 SSO 无关；keys 这里是管理员用的发放接口，守卫只认全局 key。
+		//
+		// 因此 apikey 包里那套「管理员不能取成员凭证明文」的规则在此
+		// **恒不触发**；代码仍与另两座桥一致 —— 将来若接多用户，
+		// 补上 OwnerFrom 即可生效。
 		h.mux.HandleFunc("GET /admin/api/keys", guard(kh.List))
 		h.mux.HandleFunc("POST /admin/api/keys", guard(kh.Create))
 		h.mux.HandleFunc("DELETE /admin/api/keys/", guard(kh.Delete))
