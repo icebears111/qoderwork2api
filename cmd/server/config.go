@@ -20,7 +20,9 @@ type Config struct {
 	KeysFile string `json:"keys_file"`
 	// ModelsFile 模型启停表（看板「模型」页禁用/恢复）；留空用 <state_dir>/models.json。
 	ModelsFile string `json:"models_file"`
-	Region     string `json:"region"`
+	// UsageStatsFile token 用量 / 缓存命中统计（看板「缓存命中」）；留空用 <state_dir>/usage-stats.json。
+	UsageStatsFile string `json:"usage_stats_file"`
+	Region         string `json:"region"`
 
 	Cooldown struct {
 		HardCredit  string `json:"hard_credit"`
