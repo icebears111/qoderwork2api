@@ -13,8 +13,9 @@ import (
 	"sync"
 	"time"
 
-	"qoderwork2api/internal/cred"
 	"qoderwork2api/internal/apikey"
+	"qoderwork2api/internal/cred"
+	"qoderwork2api/internal/modelstate"
 	"qoderwork2api/internal/pool"
 	"qoderwork2api/internal/upstream"
 	"qoderwork2api/internal/user"
@@ -38,8 +39,11 @@ type Config struct {
 	UserStore    *user.Store
 	// KeyStore 多 key 表（看板发放的 sk- 调用凭证）。
 	// 与全局 APIKey、UserStore 三者并存；nil 表示该功能未启用。
-	KeyStore     *apikey.Store
-	PoolMgr      *user.PoolManager
+	KeyStore *apikey.Store
+	// ModelState 模型启停表（看板「模型」页禁用/恢复）；nil = 功能未启用
+	// （读作「没有任何模型被禁用」，而不是「全部禁用」）。
+	ModelState *modelstate.Store
+	PoolMgr    *user.PoolManager
 }
 
 // Handler HTTP 路由处理器。
@@ -109,6 +113,9 @@ func NewHandler(cfg Config) *Handler {
 		h.mux.HandleFunc("GET /admin/api/keys/", guard(kh.Get))
 	}
 
+	// 模型启停：与 key 管理同一道守卫（全局 key，调用方 key 不得改模型状态）
+	h.mux.HandleFunc("POST /admin/api/models/state", requireGlobalKey(h.cfg.APIKey, h.adminSetModelState))
+
 	// 用户登录接口（公开）
 	h.mux.HandleFunc("POST /api/login", adminAPI.HandleUserLogin)
 
@@ -172,10 +179,67 @@ func (h *Handler) healthz(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) status(w http.ResponseWriter, r *http.Request) {
+	// models 用于看板「模型」页：**必须含被禁用的项**并带 enabled 标记 ——
+	// 只给已启用的会让被禁用的模型从页面上消失，用户再也找不到开关恢复它。
+	mm := h.effectiveModelMap()
+	names := make([]string, 0, len(mm))
+	for name := range mm {
+		names = append(names, name)
+	}
+	for i := 0; i < len(names)-1; i++ {
+		for j := i + 1; j < len(names); j++ {
+			if names[j] < names[i] {
+				names[i], names[j] = names[j], names[i]
+			}
+		}
+	}
+	models := make([]map[string]any, 0, len(names))
+	for _, name := range names {
+		models = append(models, map[string]any{
+			"id":      name,
+			"enabled": !h.modelDisabled(name),
+		})
+	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"accounts": h.cfg.Pool.List(),
 		"has_auth": h.cfg.APIKey != "",
+		"models":   models,
 	})
+}
+
+// adminSetModelState POST /admin/api/models/state
+// body {"id":"qwen3.7-max","enabled":false} —— 启停一个模型（看板「模型」页）。
+func (h *Handler) adminSetModelState(w http.ResponseWriter, r *http.Request) {
+	if h.cfg.ModelState == nil {
+		writeOpenAIError(w, http.StatusServiceUnavailable, "not_supported",
+			"model state store is not enabled on this gateway")
+		return
+	}
+	var body struct {
+		ID      string `json:"id"`
+		Enabled *bool  `json:"enabled"`
+	}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&body); err != nil {
+		writeOpenAIError(w, http.StatusBadRequest, "invalid_request", "请求体不是合法 JSON")
+		return
+	}
+	if strings.TrimSpace(body.ID) == "" {
+		writeOpenAIError(w, http.StatusBadRequest, "invalid_request", "缺少模型 id")
+		return
+	}
+	if body.Enabled == nil {
+		writeOpenAIError(w, http.StatusBadRequest, "invalid_request", "缺少 enabled")
+		return
+	}
+	h.cfg.ModelState.SetDisabled(body.ID, !*body.Enabled)
+	fmt.Printf("model %s enabled=%v (by admin API)\n", body.ID, *body.Enabled)
+	// 回最新状态（含被禁用项），前端就地重绘
+	mm := h.effectiveModelMap()
+	out := make([]map[string]any, 0, len(mm))
+	for name := range mm {
+		out = append(out, map[string]any{"id": name, "enabled": !h.modelDisabled(name)})
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"models": out})
 }
 
 func (h *Handler) serveAdmin(w http.ResponseWriter, r *http.Request) {
@@ -199,8 +263,9 @@ func (h *Handler) serveIndex(w http.ResponseWriter, r *http.Request) {
 	http.NotFound(w, r)
 }
 
+// models 对外清单（**已过滤禁用**）。
 func (h *Handler) models(w http.ResponseWriter, r *http.Request) {
-	mm := h.effectiveModelMap()
+	mm := h.visibleModelMap()
 	meta := h.dynamicModelsMeta()
 	names := make([]string, 0, len(mm))
 	for name := range mm {
@@ -213,6 +278,38 @@ func (h *Handler) models(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+	data := h.modelEntries(names, mm, meta)
+	writeJSON(w, http.StatusOK, map[string]any{"object": "list", "data": data})
+}
+
+// visibleModelMap effectiveModelMap 去掉被看板禁用的项。
+//
+// 只给 **/v1/models 与管理页**用；聊天请求的模型解析走 effectiveModelMap
+// 本身 —— 那里要能查到一个模型「是否存在」，才能对禁用与不存在给出
+// 不同的错误（见 chatCompletions）。
+func (h *Handler) visibleModelMap() map[string]string {
+	full := h.effectiveModelMap()
+	if h.cfg.ModelState == nil {
+		return full
+	}
+	out := make(map[string]string, len(full))
+	for name, key := range full {
+		if !h.modelDisabled(name) {
+			out[name] = key
+		}
+	}
+	return out
+}
+
+// modelDisabled 该模型是否被看板禁用（大小写不敏感，ModelState 为 nil 时恒 false）。
+func (h *Handler) modelDisabled(name string) bool {
+	return h.cfg.ModelState != nil && h.cfg.ModelState.IsDisabled(name)
+}
+
+// modelEntries 把模型名 + 上游键 + 动态元信息组装成 OpenAI 风格的条目。
+// /v1/models 与管理页共用，两处字段因此不会漂移。
+func (h *Handler) modelEntries(names []string, mm map[string]string,
+	meta map[string]upstream.DynamicModel) []map[string]any {
 	data := make([]map[string]any, 0, len(names))
 	for _, name := range names {
 		entry := map[string]any{
@@ -241,7 +338,7 @@ func (h *Handler) models(w http.ResponseWriter, r *http.Request) {
 		}
 		data = append(data, entry)
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"object": "list", "data": data})
+	return data
 }
 
 func (h *Handler) dynamicModelsMeta() map[string]upstream.DynamicModel {
@@ -361,6 +458,15 @@ func (h *Handler) chatCompletions(w http.ResponseWriter, r *http.Request) {
 	modelKey, ok := h.effectiveModelMap()[strings.ToLower(req.Model)]
 	if !ok {
 		writeOpenAIError(w, http.StatusBadRequest, "invalid_model", fmt.Sprintf("unknown model %q (see /v1/models)", req.Model))
+		return
+	}
+	// 被看板禁用的模型：**给出与「模型不存在」不同的错误**。
+	// 两者都 400，但对调用方的意义完全不同 —— 前者是「这个模型存在，
+	// 但网关管理员关掉了它」（换个模型或找管理员），后者是「你写错了名字」。
+	// 合并成一句话会让用户去检查拼写，而问题其实在开关上。
+	if h.modelDisabled(req.Model) {
+		writeOpenAIError(w, http.StatusBadRequest, "model_disabled",
+			fmt.Sprintf("model %q is disabled on this gateway (see /v1/models)", req.Model))
 		return
 	}
 
