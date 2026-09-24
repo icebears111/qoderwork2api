@@ -18,9 +18,9 @@ services:
           memory: 192M
     mem_limit: 192m
     volumes:
-      - ./auths:/app/auths
-      - ./data:/app/data
-      - ./config.json:/app/config.json:ro
+      - /opt/qoderwork2api/auths:/app/auths
+      - /opt/qoderwork2api/data:/app/data
+      - /opt/qoderwork2api/config.json:/app/config.json:ro
     # ports:
     #   - "127.0.0.1:8963:8963"
     healthcheck:
